@@ -16,40 +16,47 @@ download_uris = [
 ]
 
 
-def save_files(uri: str, file_name: str, response: requests.models.Response) -> str:
+def create_dir() -> str:
+  # Create downloads directory if there isn't one already
+  downloads_path = './downloads/'
+  if not os.path.isdir(downloads_path):
+    os.mkdir(downloads_path)
+
+  return downloads_path
+
+
+def get_file_name(uri: str, file_name: str, response: requests.models.Response) -> str:
   if uri.find('/'):
     file_name += uri.rsplit('/', 1)[1]
     open(file_name, 'wb').write(response.content)
     return file_name
 
 
-def process_files(uri: str, file_name: str, directory: str) -> bool:
-  # Download the files, split the name from URI, extract csv files and delete zip
+def send_request(uri: str) -> requests.models.Response:
   response = requests.get(uri, allow_redirects=True)
   if response.status_code == 200:
-    file_name = save_files(uri, file_name, response)
-    open(file_name, 'wb').write(response.content)
-    with ZipFile(file_name) as zip_object:
-      files_list = zip_object.namelist()
-      for file in files_list:
-        if file.endswith('.csv'):
-          zip_object.extract(file, directory)
+    return response
 
-    # Delete the zip file
-    os.remove(file_name)
-    return True
+
+def download_files(uri: str, file_name: str, directory: str) -> None:
+  response = send_request(uri)
+  file_name = get_file_name(uri, file_name, response)
+  open(file_name, 'wb').write(response.content)
+  with ZipFile(file_name) as zip_object:
+    files_list = zip_object.namelist()
+    for file in files_list:
+      if file.endswith('.csv'):
+        zip_object.extract(file, directory)
+
+  # Delete the zip file
+  os.remove(file_name)
 
 
 def main():
-    # Create downloads directory if there isn't one already
-    downloads_path = './downloads/'
-    if not os.path.isdir(downloads_path):
-      os.mkdir(downloads_path)
-
-    file_name = downloads_path
+    file_name = directory = create_dir()
     no_threads = len(download_uris)
     with ThreadPoolExecutor(no_threads) as executor:
-      _ = [executor.submit(process_files, uri, file_name, downloads_path) for uri in download_uris]
+      x = [executor.submit(download_files, uri, file_name, directory) for uri in download_uris]
 
 
 if __name__ == '__main__':
