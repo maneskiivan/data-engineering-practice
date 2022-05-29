@@ -16,20 +16,12 @@ download_uris = [
 ]
 
 
-def create_dir() -> str:
+def create_dir(path: str) -> str:
   # Create downloads directory if there isn't one already
-  downloads_path = './downloads/'
-  if not os.path.isdir(downloads_path):
-    os.mkdir(downloads_path)
+  if not os.path.isdir(path):
+    os.mkdir(path)
 
-  return downloads_path
-
-
-def get_file_name(uri: str, file_name: str, response: requests.models.Response) -> str:
-  if uri.find('/'):
-    file_name += uri.rsplit('/', 1)[1]
-    open(file_name, 'wb').write(response.content)
-    return file_name
+  return path
 
 
 def send_request(uri: str) -> requests.models.Response:
@@ -38,10 +30,20 @@ def send_request(uri: str) -> requests.models.Response:
     return response
 
 
-def download_files(uri: str, file_name: str, directory: str) -> None:
+def get_file_name(uri: str, file_name: str, response: requests.models.Response) -> str:
+  if uri.find('/'):
+    file_name += uri.rsplit('/', 1)[1]
+    with open(file_name, 'wb') as f:
+      f.write(response.content)
+      f.close()
+    if os.path.exists(file_name):
+      return file_name
+
+
+def download_files(uri: str, file_name: str, directory: str) -> bool:
   response = send_request(uri)
   file_name = get_file_name(uri, file_name, response)
-  open(file_name, 'wb').write(response.content)
+
   with ZipFile(file_name) as zip_object:
     files_list = zip_object.namelist()
     for file in files_list:
@@ -50,13 +52,16 @@ def download_files(uri: str, file_name: str, directory: str) -> None:
 
   # Delete the zip file
   os.remove(file_name)
+  if not os.path.exists(file_name):
+    return True
 
 
 def main():
-    file_name = directory = create_dir()
-    no_threads = len(download_uris)
-    with ThreadPoolExecutor(no_threads) as executor:
-      x = [executor.submit(download_files, uri, file_name, directory) for uri in download_uris]
+  path = './downloads/'
+  file_name = directory = create_dir(path)
+  no_threads = len(download_uris)
+  with ThreadPoolExecutor(no_threads) as executor:
+    x = [executor.submit(download_files, uri, file_name, directory) for uri in download_uris]
 
 
 if __name__ == '__main__':
