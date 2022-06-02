@@ -1,4 +1,5 @@
 import os
+import sys
 
 import requests
 import pandas as pd
@@ -44,7 +45,6 @@ def clear_old_data(path: str) -> None:
 def download_files(uri: str, file_name: str, directory: str) -> str:
   response = send_request(uri)
   file_name = directory + file_name
-  clear_old_data(file_name)
   with open(file_name, 'wb') as f:
     f.write(response.content)
     f.close()
@@ -53,7 +53,6 @@ def download_files(uri: str, file_name: str, directory: str) -> str:
 
 
 def main():
-    # your code here
     uri = 'https://www.ncei.noaa.gov/data/local-climatological-data/access/2021/'
     dt = '2022-02-07 14:03'
     data = send_request(uri)
@@ -62,6 +61,11 @@ def main():
     download_link = uri + file_name
     download_dir = create_dir('./downloads/')
     download_file = download_files(download_link, file_name, download_dir)
+
+    df = pd.read_csv(download_file)
+    highest = df[df['HourlyDryBulbTemperature'] == df['HourlyDryBulbTemperature'].max()]
+    highest = highest[["STATION", "DATE", "HourlyDryBulbTemperature"]]
+    print(highest.to_string(index=False))
 
 
 if __name__ == '__main__':
