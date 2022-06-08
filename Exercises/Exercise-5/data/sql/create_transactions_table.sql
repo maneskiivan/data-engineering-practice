@@ -1,5 +1,5 @@
 CREATE TABLE transactions (
-  transaction_id INT PRIMARY KEY UNIQUE NOT NULL,
+  transaction_id VARCHAR (27) PRIMARY KEY UNIQUE NOT NULL,
   transaction_date DATE NOT NULL,
   product_id INT REFERENCES products (product_id),
   product_code INT NOT NULL,
