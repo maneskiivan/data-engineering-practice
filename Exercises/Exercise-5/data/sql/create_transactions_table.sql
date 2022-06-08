@@ -1,21 +1,10 @@
-CREATE TABLE [IF NOT EXISTS] transactions (
+CREATE TABLE transactions (
   transaction_id INT PRIMARY KEY UNIQUE NOT NULL,
   transaction_date DATE NOT NULL,
-  CONSTRAINT product_id
-    FOREIGN KEY (product_id)
-      REFERENCES products(product_id)
-      ON DELETE CASCADE,
-  CONSTRAINT product_code
-    FOREIGN KEY (product_code)
-      REFERENCES products(product_code)
-      ON DELETE CASCADE,
-  CONSTRAINT product_description
-    FOREIGN KEY (product_description)
-      REFERENCES products(product_description)
-      ON DELETE CASCADE,
-  quantity INT NOT NULL,
-  CONSTRAINT account_id
-    FOREIGN KEY (customer_id)
-      REFERENCES accounts(customer_id)
-      ON DELETE CASCADE
+  product_id INT REFERENCES products (product_id),
+  product_code INT NOT NULL,
+  product_description VARCHAR (120),
+  quantity INT,
+  account_id INT REFERENCES accounts(customer_id),
+  UNIQUE (transaction_id, product_id, account_id)
 );

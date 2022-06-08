@@ -1,5 +1,5 @@
-CREATE TABLE [IF NOT EXISTS] accounts (
-  customer_id INT PRIMARY KEY UNIQUE NOT NULL,
+CREATE TABLE accounts (
+  customer_id INT PRIMARY KEY NOT NULL,
   first_name VARCHAR (50) NOT NULL,
   last_name VARCHAR (50) NOT NULL,
   address_1 VARCHAR (120),
@@ -7,5 +7,6 @@ CREATE TABLE [IF NOT EXISTS] accounts (
   city VARCHAR (50),
   state VARCHAR (50),
   zip_code INT,
-  join_date DATE NOT NULL
+  join_date DATE NOT NULL,
+  UNIQUE (customer_id)
 );
