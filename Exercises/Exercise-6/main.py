@@ -44,11 +44,11 @@ def main():
   # ----- Answer questions -----
 
   # 1. What is the `average` trip duration per day?
-  q1 = sp_df.groupBy(date_format(col('start_time').alias('Date'), 'yyyy-MM-dd')) \
-      .avg('tripduration').alias('Average trip duration')
+  q1 = sp_df.groupBy(date_format(col('start_time'), 'yyyy-MM-dd').alias('Date')) \
+      .avg('tripduration').orderBy('Date')
 
   print(q1.show())
-  test
+
 
 if __name__ == '__main__':
     main()
