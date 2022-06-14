@@ -48,7 +48,7 @@ def main():
       .avg('tripduration').alias('Average trip duration')
 
   print(q1.show())
-
+  test
 
 if __name__ == '__main__':
     main()
