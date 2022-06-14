@@ -45,7 +45,7 @@ def main():
 
   # 1. What is the `average` trip duration per day?
   q1 = sp_df.groupBy(date_format(col('start_time'), 'yyyy-MM-dd').alias('Date')) \
-      .agg(avg('tripduration').alias('Trip Duration per day')).orderBy('Date')
+      .agg(format_number(avg('tripduration'), 2).alias('Trip Duration per day')).orderBy('Date')
 
   print(q1.show())
 
