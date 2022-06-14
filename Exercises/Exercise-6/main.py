@@ -55,6 +55,12 @@ def main():
 
   print(q2.show())
 
+  # 3. What was the most popular starting trip station for each month?
+  q3 = sp_df.groupBy(date_format(col('start_time'), 'MM').alias('Month')) \
+      .agg(max('from_station_name').alias('Most popular station name')).orderBy('Month')
+
+  print(q3.show())
+
 
 if __name__ == '__main__':
     main()
