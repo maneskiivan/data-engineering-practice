@@ -72,6 +72,10 @@ def main():
     col('rank')
   ).distinct().filter(col("rank") <= 3).orderBy(desc('Date'), 'rank').limit(42).show()
 
+  # 5. Do `Male`s or `Female`s take longer trips on average?
+  q5 = sp_df.groupBy('gender').agg(avg('tripduration').alias('Avg trip duration')).orderBy(desc('Avg trip duration'))
+  q5.show()
+
 
 if __name__ == '__main__':
     main()
