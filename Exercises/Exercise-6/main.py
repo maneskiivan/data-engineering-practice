@@ -70,7 +70,7 @@ def main():
     date_format(col('start_time'), 'yyyy-MM-dd').alias('Date'),
     col('from_station_name'),
     col('rank')
-  ).distinct().filter(col("rank") <= 3).orderBy('Date', 'rank').show()
+  ).distinct().filter(col("rank") <= 3).orderBy(desc('Date'), 'rank').limit(42).show()
 
 
 if __name__ == '__main__':
