@@ -114,13 +114,17 @@ def main():
   temp_df1 = sp_df.na.drop(subset=['birthyear'])
   temp_df2 = temp_df1.withColumn('age', current_year - col('birthyear'))
 
-  q6 = temp_df2.groupBy('age').agg(
-    format_number(max('tripduration'), 2).alias('longest trip duration'),
-    format_number(min('tripduration'), 2).alias('shortest trip duration')
-  )
+  q6_longest = temp_df2.groupBy('age').agg(
+    max('tripduration').alias('longest trip duration')
+  ).orderBy(desc('longest trip duration'))
 
-  q6.orderBy(desc('age')).limit(10).show()
-  q6.orderBy('age').limit(10).show()
+  q6_shortest = temp_df2.groupBy('age').agg(
+    min('tripduration').alias('shortest trip duration')
+  ).orderBy(asc('shortest trip duration'))
+
+  # write result to csv
+  w_sp_df_to_csv(q6_longest.limit(10), reports_dir + '/q6_longest')
+  w_sp_df_to_csv(q6_shortest.limit(10), reports_dir + '/q6_shortest')
 
 
 if __name__ == '__main__':
