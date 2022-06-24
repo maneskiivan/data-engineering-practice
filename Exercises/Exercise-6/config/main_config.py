@@ -1,18 +1,16 @@
-from pyspark.sql import SparkSession, dataframe
-from pyspark.sql.functions import *
-from pyspark.sql.window import Window
-from pyspark.sql.types import StructField, StructType, StringType, IntegerType, FloatType, TimestampType
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructField, StructType
 
 import os
 
 
 class SparkOperation:
+    """
+    Creates a spark session
+    :param appname:Name for the spark session app
+    """
 
     def __init__(self, appname: str):
-        """
-        Creates a spark session
-        :param appname:Name for the spark session app
-        """
         self.spark = SparkSession.builder.appName(appname) \
             .enableHiveSupport().getOrCreate()
 
