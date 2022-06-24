@@ -1,12 +1,14 @@
 from pyspark.sql import SparkSession, dataframe
 from pyspark.sql.functions import *
 from pyspark.sql.window import Window
-from pyspark.sql.types import StructField, StructType, StringType, IntegerType, FloatType, TimestampType
+from pyspark.sql.types import StringType, IntegerType, FloatType, TimestampType
 import pandas as pd
 
 from zipfile import ZipFile
 from datetime import date
 import os
+
+from config.main_config import SparkOperation
 
 
 def create_dir(path: str) -> str:
@@ -15,18 +17,6 @@ def create_dir(path: str) -> str:
     os.mkdir(path)
 
   return path
-
-
-def start_spark_session(appname: str) -> SparkSession:
-  return SparkSession.builder.appName(appname) \
-      .enableHiveSupport().getOrCreate()
-
-
-def w_sp_df_to_csv(sp_df: dataframe.DataFrame, file_path) -> bool:
-  sp_df.toPandas().to_csv(file_path + '.csv', index=False)
-
-  if os.path.exists(file_path):
-    return True
 
 
 def main():
@@ -42,27 +32,34 @@ def main():
   pd_df['tripduration'] = pd.to_numeric(pd_df['tripduration'])
 
   # start a spark session
-  spark = start_spark_session('Exercise6')
+  ss = SparkOperation('Exercise6')
 
-  custom_schema = StructType(
-    [
-      StructField('trip_id', IntegerType(), False),
-      StructField('start_time', TimestampType(), False),
-      StructField('end_time', TimestampType(), False),
-      StructField('bikeid', IntegerType(), False),
-      StructField('tripduration', FloatType(), False),
-      StructField('from_station_id', IntegerType(), False),
-      StructField('from_station_name', StringType(), True),
-      StructField('to_station_id', IntegerType(), False),
-      StructField('to_station_name', StringType(), True),
-      StructField('usertype', StringType(), False),
-      StructField('gender', StringType(), True),
-      StructField('birthyear', FloatType(), True)
-    ]
+  column_names = pd_df.columns.values.tolist()
+
+  types_list = [
+    IntegerType(),
+    TimestampType(),
+    TimestampType(),
+    IntegerType(),
+    FloatType(),
+    IntegerType(),
+    StringType(),
+    IntegerType(),
+    StringType(),
+    StringType(),
+    StringType(),
+    FloatType()
+  ]
+  nullable_list = [False, False, False, False, False, False, True, False, True, False, True, True]
+
+  custom_schema = ss.create_schema(
+    name_list=column_names,
+    type_list=types_list,
+    nullable_list=nullable_list
   )
 
   # create spark df from pandas df
-  sp_df = spark.createDataFrame(pd_df, schema=custom_schema)
+  sp_df = ss.spark.createDataFrame(pd_df, schema=custom_schema)
 
   # ----- Answer questions -----
 
@@ -71,21 +68,21 @@ def main():
       .agg(format_number(avg('tripduration'), 2).alias('Trip Duration per day')).orderBy('Date')
 
   # write result to csv
-  w_sp_df_to_csv(q1, reports_dir + '/q1')
+  ss.write_to_csv(q1, reports_dir + '/q1')
 
   # 2. How many trips were taken each day?
   q2 = sp_df.groupBy(date_format(col('start_time'), 'yyyy-MM-dd').alias('Date')) \
       .agg(count('trip_id').alias('Trips per day')).orderBy('Date')
 
   # write result to csv
-  w_sp_df_to_csv(q2, reports_dir + '/q2')
+  ss.write_to_csv(q2, reports_dir + '/q2')
 
   # 3. What was the most popular starting trip station for each month?
   q3 = sp_df.groupBy(date_format(col('start_time'), 'MM').alias('Month')) \
       .agg(max('from_station_name').alias('Most popular starting station name')).orderBy('Month')
 
   # write result to csv
-  w_sp_df_to_csv(q3, reports_dir + '/q3')
+  ss.write_to_csv(q3, reports_dir + '/q3')
 
   # 4. What were the top 3 trip stations each day for the last two weeks?
   window_spec = Window.partitionBy(date_format(col('start_time'), 'yyyy-MM-dd')).orderBy(col('from_station_name'))
@@ -98,14 +95,14 @@ def main():
   ).distinct().filter(col("rank") <= 3).orderBy(desc('Date'), 'rank').limit(42)
 
   # write result to csv
-  w_sp_df_to_csv(q4, reports_dir + '/q4')
+  ss.write_to_csv(q4, reports_dir + '/q4')
 
   # 5. Do `Male`s or `Female`s take longer trips on average?
   q5 = sp_df.groupBy('gender').agg(format_number(avg('tripduration'), 2).alias('Avg trip duration')) \
       .orderBy(desc('Avg trip duration'))
 
   # write result to csv
-  w_sp_df_to_csv(q5.na.replace('NaN', 'Not specified'), reports_dir + '/q5')
+  ss.write_to_csv(q5.na.replace('NaN', 'Not specified'), reports_dir + '/q5')
 
   # 6. What is the top 10 ages of those that take the longest trips, and shortest?
   today_date = date.today()
@@ -123,8 +120,8 @@ def main():
   ).orderBy(asc('shortest trip duration'))
 
   # write result to csv
-  w_sp_df_to_csv(q6_longest.limit(10), reports_dir + '/q6_longest')
-  w_sp_df_to_csv(q6_shortest.limit(10), reports_dir + '/q6_shortest')
+  ss.write_to_csv(q6_longest.limit(10), reports_dir + '/q6_longest')
+  ss.write_to_csv(q6_shortest.limit(10), reports_dir + '/q6_shortest')
 
 
 if __name__ == '__main__':
