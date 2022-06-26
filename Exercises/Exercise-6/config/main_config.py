@@ -29,7 +29,7 @@ class SparkOperation:
 
         return StructType(fields)
 
-    def write_to_csv(self, data, path):
+    def write_to_csv(self, data, path) -> bool:
         """
         Writes dataframe to csv and returns True if the file exists
         :param data: The dataframe
